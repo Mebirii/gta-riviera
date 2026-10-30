@@ -1,0 +1,12 @@
+'use strict';const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const files={};const app={innerHTML:'',addEventListener(event,fn){files[event]=fn;}};const saved={};const ctx={console,document:{getElementById:()=>app},localStorage:{getItem:k=>saved[k]||null,setItem:(k,v)=>saved[k]=v},window:{scrollTo:()=>{}},location:{protocol:'file:'},navigator:{},confirm:()=>true};ctx.globalThis=ctx;
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('./engine.js','utf8'),ctx);vm.runInContext(fs.readFileSync('./app.js','utf8'),ctx);
+const click=(action,value)=>files.click({target:{closest:()=>({dataset:{action,value}})}});
+assert(app.innerHTML.includes('COMMENCER L’AVENTURE'));
+click('start');assert(app.innerHTML.includes('La moitié ne suffit pas'));
+click('choice','answer');assert(app.innerHTML.includes('Un contrat inachevé'));
+click('choice','accept');assert(app.innerHTML.includes('Les fils de Nérée'));
+click('home');click('mode','local');click('count','-1');click('count','-1');click('start');
+click('choice','answer');assert(app.innerHTML.includes('Vote 2/2'));
+click('choice','answer');assert(app.innerHTML.includes('RÉSOUDRE LES VOTES'));
+click('resolve-local');assert(app.innerHTML.includes('Un contrat inachevé'));
+console.log('Tests UI OK : accueil, solo, progression et vote local');
