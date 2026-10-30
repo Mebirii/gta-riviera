@@ -1,0 +1,16 @@
+{
+  "name": "gta-riviera-neree",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Jeu narratif solo, coop local et multijoueur en ligne",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js && node test-ui.js && node test-online.js && node test-campaign.js && node test-resume.js && node test-v3.js"
+  },
+  "dependencies": {
+    "pg": "8.16.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
