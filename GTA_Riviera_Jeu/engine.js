@@ -1,5 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.RivieraEngine=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
+const World=typeof module==='object'&&module.exports?require('./world'):RivieraWorld;
 const HEROES=[
 {id:'gauthier',name:'Gauthier',role:'Le cerveau',bio:'Un nouveau venu dans la Riviera. Son premier contrat reste à écrire.',portrait:'gauthier',skills:{physique:0,ruse:1,technique:2,bagout:1,pilotage:0},specialty:'technique',color:'#b5a5ff'},
 {id:'yanis',name:'Yanis',role:'L’insaisissable',bio:'Discret et débrouillard, il n’a pas encore rencontré les dangers du Belladone.',portrait:'yanis',skills:{physique:1,ruse:2,technique:0,bagout:0,pilotage:1},specialty:'ruse',color:'#61dfcf'},
@@ -18,10 +19,10 @@ const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 function createGame(difficulty='normal',mission='belladone'){
  if(!Object.keys(MISSION_START).includes(mission)||mission==='gala')mission='belladone';
  const fresh=mission==='belladone';
- return{version:4,scene:MISSION_START[mission],mission,completed:{},difficulty,round:0,
+ return World.initialize({version:5,scene:MISSION_START[mission],mission,completed:{},difficulty,round:0,
  stats:{heat:0,lucien:0,police:0,money:300,morale:3},
  flags:{half:!fresh,memory:false,watch:false,full:false,missionOnePlayed:!fresh},
- journal:[{title:fresh?'Bienvenue à Riviera':'Nouvelle opération',text:fresh?'Vous êtes inconnus ici. Aucun contrat n’a encore été accepté.':'Une opération indépendante débute.'}],last:null,history:[],ended:false};}
+ journal:[{title:fresh?'Bienvenue à Riviera':'Nouvelle opération',text:fresh?'Vous êtes inconnus ici. Aucun contrat n’a encore été accepté.':'Une opération indépendante débute.'}],last:null,history:[],ended:false});}
 function clone(s){return JSON.parse(JSON.stringify(s));}
 function flags(s){return s.flags;}
 function leads(s){return ['leadPort','leadWatch','leadPolice'].filter(k=>!!s.flags[k]).length;}
@@ -50,10 +51,11 @@ choice('belle_bar','Entrer par le hall et le bar','Se fondre parmi les clients e
 choice('belle_delivery','Contourner par la livraison','Éviter les regards, au prix d’une serrure à franchir.','belle_service',{set:{entry:'service'},note:'Vous vous glissez vers les cuisines.'}),
 choice('belle_terrace','Passer par la terrasse','Approcher le personnel de soirée et un accès latéral.','belle_terrace',{set:{entry:'terrace'},note:'Vous trouvez un accès aux jardins du Belladone.'})]};
 case 'belle_barroom':return{chapter:'SCÉNARIO 01 · LE BELLADONE',location:'BELLADONE · BAR',title:'Sous les lustres',paragraphs:[
-'Un serveur remplit des coupes. Un client distrait porte une montre qui semble valoir une fortune. Un agent en costume, probablement Hugo, observe le couloir des escaliers.',
+'Un serveur remplit des coupes. Les clients discutent discrètement, sous les regards de la sécurité. Un agent en costume, probablement Hugo, observe le couloir des escaliers.',
 'Pour l’instant, personne n’a reconnu votre groupe. Ce qui se passe ici sera le résultat de vos décisions, pas un événement déjà écrit.'],objective:'Préparer l’accès à l’escalier VIP.',choices:[
 choice('belle_drink','Commander et écouter les conversations','La clientèle pourrait révéler un passage discret.','belle_stairs',{skill:'ruse',dc:7,jdr:true,success:{set:{barIntel:true},note:'Vous apprenez que le personnel utilise l’escalier de service.'},failure:{stats:{heat:1},note:'Un videur vous demande de circuler.'}}),
-choice('belle_watch','Essayer de dérober la montre du client','Un coup risqué : la montre pourrait valoir cher.','belle_stairs',{skill:'ruse',dc:11,jdr:true,success:{set:{watch:true},note:'Vous subtilisez la montre : sa valeur exacte reste à établir.'},failure:{stats:{heat:2},note:'Le client se retourne au dernier moment. Vous lâchez prise.'}}),
+choice('belle_observe','Observer les invités et leurs habitudes','Repérer qui surveille les accès et quand les agents tournent.','belle_stairs',{skill:'ruse',dc:9,jdr:true,success:{set:{barIntel:true},note:'Un va-et-vient discret indique l’escalier du personnel.'},failure:{stats:{heat:1},note:'Hugo vous remarque, mais vous restez parmi les invités.'}}),
+    choice('belle_contact','Demander un conseil à Sofia, votre contact','Votre amie au bar connaît les habitudes de la sécurité.','belle_stairs',{condition:!!s.crew?.some(p=>p.contactId==='barmaid'),set:{barIntel:true,noraAlly:true},note:'Sofia vous indique le moment exact du changement de garde.'}),
 choice('belle_staff','Se présenter comme un invité en retard','Tenter un bluff face à Hugo.','belle_stairs',{skill:'bagout',dc:9,jdr:true,success:{set:{vipAccess:true},note:'Hugo vous laisse approcher l’escalier réservé.'},failure:{stats:{heat:2},note:'Hugo demande à un collègue de garder un œil sur vous.'}})]};
 case 'belle_service':return{chapter:'SCÉNARIO 01 · LES COULISSES',location:'BELLADONE · LIVRAISONS',title:'L’odeur du sous-sol',paragraphs:['Un camion frigorifique masque l’entrée des cuisines. Deux employés fument derrière les bennes. Une porte à badge conduit vers les étages.'],objective:'Passer la zone de service.',choices:[
 choice('belle_lock','Forcer le lecteur de badge','La technique pourrait vous ouvrir le chemin.','belle_stairs',{skill:'technique',dc:9,jdr:true,success:{set:{servicePass:true},note:'La serrure cède sans déclencher d’alarme.'},failure:{stats:{heat:2},note:'Le système émet un bip. Un employé vient vérifier.'}}),
@@ -92,13 +94,13 @@ choice('belle_call','Rappeler Lucien immédiatement','Rendre compte sans savoir 
 case 'ending_belle_partial':return{chapter:'SCÉNARIO 01 · FIN DE MISSION',location:'BELLE-RIVE · AU PETIT MATIN',title:f.full?'Un dossier qui vaut de l’or':f.half?'La moitié d’un secret':'Le contrat vous échappe',paragraphs:[
  f.full?'Vous avez récupéré le dossier complet. Reste à savoir qui en contrôlera la vérité.':f.half?'Vous possédez une partie du dossier Nérée. Il manque des feuillets : le contrat n’est pas achevé.':'Vous avez quitté le Belladone sans le dossier. Lucien n’aura pas la réponse qu’il attend.',
  f.memory?'Un membre de l’équipe a pu mémoriser les lignes observées grâce à un jet réussi. Rien de cela n’était acquis au départ.':'Votre équipe ne dispose d’aucun souvenir parfait du contenu. Une autre piste sera nécessaire.',
- f.watch?'La montre volée au bar pourrait devenir une piste secondaire.':'Vous n’avez pas volé de montre : cette piste ne s’ouvrira que si vos actes la créent.',
+ f.watch?'Une piste secondaire issue d’une improvisation du groupe peut être explorée.':'Aucune diversion extérieure au contrat n’a été imposée : seules vos actions déterminent les événements.',
  'Lucien attend de vous revoir. Ce premier contrat ouvre les prochaines missions.'],objective:'Scénario 1 terminé. Continuer l’histoire de Riviera.',choices:[],isEnding:true};
 case 'intro':return{chapter:'SCÉNARIO 02 · LES CONSÉQUENCES',location:'PORT RIVIERA · 02 H 17',title:'La Seconde Moitié',paragraphs:[
 'Après le Belladone, Riviera n’a pas oublié votre groupe. Lucien réclame le résultat du contrat.',
 f.full?'Vous détenez déjà l’ensemble du dossier Nérée : sa valeur, et les ambitions de Lucien, restent à découvrir.':f.half?'Vous n’avez ramené qu’une partie du dossier. Qui détient l’autre moitié ?':'Vous n’avez pas récupéré suffisamment de documents : il faut retrouver la piste Nérée.',
 f.memory?'L’un des vôtres garde en mémoire le contenu observé lors d’un jet réussi.':'Personne ne possède de mémoire parfaite du dossier.',
-f.watch?'La montre éventuellement dérobée au Belladone constitue un indice à explorer.':'Vous n’avez pas de montre volée.' ],objective:'Faire le point avec Lucien et ouvrir l’enquête.',choices:[choice('answer','Retrouver Lucien','Lui raconter ce qui s’est réellement passé.','lucien')]};
+f.watch?'Un objet obtenu par improvisation reste une piste facultative.':'La suite dépend uniquement des informations effectivement recueillies.' ],objective:'Faire le point avec Lucien et ouvrir l’enquête.',choices:[choice('answer','Retrouver Lucien','Lui raconter ce qui s’est réellement passé.','lucien')]};
 case 'lucien':return{chapter:'ACTE I · LE COMMANDITAIRE',location:'VIEUX PORT · BUREAU DE LUCIEN',title:'Un contrat inachevé',paragraphs:[
 'Lucien allume une cigarette sans vous proposer de vous asseoir. Il examine ce que vous avez ramené du Belladone.',
 '« Une piste mène à Porto Rosso. Je vous donne une chance de finir le travail. Ne confondez pas ma patience avec de la faiblesse. »',
@@ -217,11 +219,13 @@ function dcFor(c,difficulty='normal'){
  return clamp(base+(difficulty==='facile'?-2:difficulty==='difficile'?2:0),5,15);
 }
 function choose(state,choiceId,actorId='gauthier',rollOverride){const s=clone(state);if(s.ended)throw Error('La partie est terminée');const c=canChoose(s,choiceId);if(!c||c.condition===false)throw Error('Action non disponible');const hero=(Array.isArray(s.crew)?s.crew.find(h=>h.id===actorId):null)||HEROES.find(h=>h.id===actorId)||HEROES[0];let success=null,roll=null,total=null,dc=null,changes,note='';let next=c.to;
-if(c.skill){roll=rollOverride===undefined?randomRoll():clamp(Math.trunc(rollOverride),2,12);dc=dcFor(c,s.difficulty);total=roll+(hero.skills?.[c.skill]||0)+(hero.specialty===c.skill?1:0);success=roll===12||roll!==2&&total>=dc;changes=success?c.success:c.failure;}
+if(c.skill){roll=rollOverride===undefined?randomRoll():clamp(Math.trunc(rollOverride),2,12);dc=dcFor(c,s.difficulty);const modifier=World.rollBonus(s,hero,c.skill,roll);total=roll+(hero.skills?.[c.skill]||0)+(hero.specialty===c.skill?1:0)+modifier.value;success=roll===12||roll!==2&&total>=dc;changes=success?c.success:c.failure;}
 else changes={stats:c.effects,set:c.set,note:c.note};
+if(c.skill&&roll===2&&hero.flawId==='impulsive')s.stats.heat=clamp(s.stats.heat+1,0,10);
 if(changes){add(s,changes.stats||{},changes.set||{});note=changes.note||'';if(changes.to)next=changes.to;}
+if(s.flags.full){delete s.inventory.dossier_half;s.inventory.dossier_full=1;}else if(s.flags.half)s.inventory.dossier_half=1;
 if(c.mission)s.mission=c.mission;s.scene=next;s.round++;s.ended=next.startsWith('ending_');if(s.ended){s.completed=s.completed||{};s.completed[s.mission||'belladone']=true;if(s.mission==='belladone')s.flags.missionOnePlayed=true;}s.last={choice:c.title,actor:hero.name,skill:c.skill||null,skillLabel:c.skill?SKILL_LABEL[c.skill]:null,roll,total,dc,success,note,turn:s.round};s.journal.unshift({title:c.title,text:note||(success===null?'Décision enregistrée.':'Action résolue.'),turn:s.round});s.journal=s.journal.slice(0,24);s.history.push({scene:state.scene,choice:choiceId,actor:hero.id,roll,success});return s;}
 function continueCampaign(state){const s=clone(state);if(!s.ended)throw Error('Terminez la mission avant de continuer.');s.ended=false;s.scene='mission_hub';s.mission='hub';s.last=null;s.journal.unshift({title:'Nouvelle mission disponible',text:'La campagne continue. Les conséquences de vos décisions sont conservées.'});return s;}
-function publicState(s){return{mission:s.mission,completed:s.completed,scene:s.scene,difficulty:s.difficulty,round:s.round,stats:s.stats,flags:s.flags,journal:s.journal,last:s.last,ended:s.ended,crew:s.crew||null};}
-return{HEROES,SKILL_LABEL,SKILL_HELP,MISSIONS,createGame,getScene,choose,leads,dcFor,publicState,continueCampaign};
+function publicState(s){return{inventory:s.inventory||{},equipped:s.equipped||null,prepared:s.prepared||null,servicesUsed:s.servicesUsed||{},mission:s.mission,completed:s.completed,scene:s.scene,difficulty:s.difficulty,round:s.round,stats:s.stats,flags:s.flags,journal:s.journal,last:s.last,ended:s.ended,crew:s.crew||null};}
+return{HEROES,SKILL_LABEL,SKILL_HELP,MISSIONS,createGame,getScene,choose,leads,dcFor,publicState,continueCampaign,prepareCrew:World.prepareCrew,worldAction:World.perform,WORLD:World};
 });

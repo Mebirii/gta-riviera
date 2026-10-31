@@ -1,11 +1,11 @@
 {
   "name": "gta-riviera-campagne",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "private": true,
   "description": "GTA Riviera JDR - Scenario 1, creation de personnage 5 attributs et sauvegardes multijoueur",
   "scripts": {
     "start": "node server.js",
-    "test": "node test-v4.js && node test-ui-v4.js"
+    "test": "node test-v4.js && node test-ui-v4.js && node test-v5.js && node test-online-v5.js"
   },
   "dependencies": {
     "pg": "8.16.3"

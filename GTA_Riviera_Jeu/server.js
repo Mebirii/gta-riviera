@@ -80,11 +80,17 @@ attachWebSocket(server,ws=>{
  const room=rooms.get(ws.player.room),p=room?.players.find(x=>x.id===ws.player.id);
  if(!p)return error(ws,'Salon ou joueur introuvable.');
  seen(room);const host=room.hostId===p.id;
+ if(msg.type==='world'){
+  if(!host)return error(ws,'Seul l’hôte gère la caisse et le matériel.');
+  if(!room.game||room.game.ended)return error(ws,'Commencez une mission pour accéder à Riviera.');
+  if(Object.keys(room.votes).length)return error(ws,'Terminez d’abord le vote en cours.');
+  room.game=E.worldAction(room.game,msg.action,msg.id);await checkpoint(room);broadcast(room);return;
+ }
  if(msg.type==='start'){
   if(!host)return error(ws,'Seul l’hôte peut commencer.');
   if(room.game)return error(ws,'Partie déjà commencée.');
   if(livePlayers(room).length<2)return error(ws,'Il faut au moins deux joueurs.');
-  room.game=room.importedCampaign||E.createGame(room.difficulty,room.mission);room.importedCampaign=null;room.game.crew=room.players.map(p=>actor(room,p));room.votes={};await checkpoint(room);broadcast(room);return;
+  room.game=room.importedCampaign||E.createGame(room.difficulty,room.mission);room.importedCampaign=null;E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.votes={};await checkpoint(room);broadcast(room);return;
  }
  if(msg.type==='vote'){
   if(!room.game||room.game.ended)return error(ws,'Aucun vote actif.');
@@ -121,14 +127,14 @@ attachWebSocket(server,ws=>{
   const b=msg.backup;
   if(!b||b.version!==3||!b.game||typeof b.game!=='object'||JSON.stringify(b).length>150000)return error(ws,'Fichier de sauvegarde invalide ou trop volumineux.');
   const game=JSON.parse(JSON.stringify(b.game));
-  if(![1,4].includes(game.version)||!Number.isInteger(game.round)||game.round<0||game.round>10000||!game.stats||!game.flags||!Array.isArray(game.journal)||!Array.isArray(game.history)||game.history.length>10000||game.journal.length>100)return error(ws,'Format de campagne non pris en charge.');
+  if(![1,4,5].includes(game.version)||!Number.isInteger(game.round)||game.round<0||game.round>10000||!game.stats||!game.flags||!Array.isArray(game.journal)||!Array.isArray(game.history)||game.history.length>10000||game.journal.length>100)return error(ws,'Format de campagne non pris en charge.');
   try{E.getScene(game);}catch{return error(ws,'Cette scène ne peut pas être chargée.');}
   room.importedCampaign=game;
   await checkpoint(room);broadcast(room);return;
  }
  if(msg.type==='restart'){
   if(!host)return error(ws,'Seul l’hôte peut recommencer.');
-  room.game=E.createGame(room.difficulty,room.mission);room.game.crew=room.players.map(p=>actor(room,p));room.votes={};await checkpoint(room);broadcast(room);return;
+  room.game=E.createGame(room.difficulty,room.mission);E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.votes={};await checkpoint(room);broadcast(room);return;
  }
  error(ws,'Action inconnue.');
  }catch(e){console.error('Message serveur:',e);error(ws,e.message||'Une erreur serveur est survenue.');}

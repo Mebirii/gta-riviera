@@ -1,0 +1,22 @@
+'use strict';
+const assert=require('node:assert/strict'),E=require('./engine'),World=require('./world'),{sanitizeProfile}=require('./profile');
+const base={name:'Noa',nickname:'Lynx',archetype:'Fixeur',portrait:'extra-04',color:'#61dfcf',skills:{physique:0,ruse:2,technique:1,bagout:1,pilotage:0},specialty:'ruse',contactId:'barmaid',flawId:'impulsive'};
+const hero=sanitizeProfile(base);assert.equal(hero.portrait,'extra-04');assert.equal(World.CONTACTS.length,6);assert.equal(World.FLAWS.length,6);
+assert.throws(()=>sanitizeProfile({...base,contactId:'fake'}));assert.throws(()=>sanitizeProfile({...base,flawId:null}));
+let s=E.createGame();E.prepareCrew(s,[hero]);assert(s.inventory.beeper&&s.inventory.firstaid);
+assert(!E.getScene(s).paragraphs.join(' ').includes('montre'));s=E.choose(s,'belle_go',hero.id);s=E.choose(s,'belle_accept',hero.id);s=E.choose(s,'belle_bar',hero.id);
+let bar=E.getScene(s);assert(!bar.choices.some(x=>x.id==='belle_watch'));assert(bar.choices.some(x=>x.id==='belle_contact'));
+let withAlly=E.choose(s,'belle_contact',hero.id);assert.equal(withAlly.flags.barIntel,true);
+let noAlly=E.createGame();noAlly=E.choose(noAlly,'belle_go');noAlly=E.choose(noAlly,'belle_accept');noAlly=E.choose(noAlly,'belle_bar');assert(!E.getScene(noAlly).choices.some(x=>x.id==='belle_contact'&&x.condition!==false));
+let money=s.stats.money;
+let gear=E.worldAction(s,'buy','sneakers');assert.equal(gear.stats.money,money-100);assert.equal(gear.inventory.sneakers,1);assert.equal(E.worldAction(gear,'equip','sneakers').equipped,'sneakers');
+const testWithout=E.choose(s,'belle_observe',hero.id,6),testWith=E.choose(E.worldAction(gear,'equip','sneakers'),'belle_observe',hero.id,6);assert.equal(testWith.last.total,testWithout.last.total+1);
+let drink=E.worldAction(gear,'buy','espresso');drink=E.worldAction(drink,'use','espresso');assert.equal(drink.prepared.bonus,2);let after=E.choose(drink,'belle_observe',hero.id,6);assert.equal(after.prepared,null);assert.equal(after.last.total,testWithout.last.total+2);
+assert.throws(()=>E.worldAction(drink,'use','espresso'));assert.throws(()=>E.worldAction(E.worldAction(s,'buy','vest'),'buy','signal'));
+let clinic=E.worldAction(s,'service','doctor');assert.equal(clinic.stats.money,s.stats.money-120);assert.equal(clinic.stats.morale,s.stats.morale+1);assert.throws(()=>E.worldAction(clinic,'service','doctor'));
+let debtor=E.createGame();E.prepareCrew(debtor,[sanitizeProfile({...base,flawId:'indebted'})]);assert.equal(debtor.stats.money,150);
+let wanted=E.createGame();E.prepareCrew(wanted,[sanitizeProfile({...base,flawId:'wanted'})]);assert.equal(wanted.stats.heat,2);
+let unlucky=E.createGame();E.prepareCrew(unlucky,[hero]);unlucky=E.choose(unlucky,'belle_scout',hero.id,2);assert.equal(unlucky.stats.heat,2); // 1 base failure, +1 critical from flaw
+assert.equal(E.publicState(gear).inventory.sneakers,1);
+const fs=require('node:fs');const html=fs.readFileSync('GTA_Riviera.html','utf8');assert(html.includes('Le Bazar des Quais'));assert(html.includes('portrait-extra-12'));assert(html.includes('DÉFAUT'));assert(!html.includes('Essayer de dérober la montre du client'));
+console.log('V5 OK: montre absente, 12 portraits, contacts/défauts, achats, équipements, consommables, services, 2D6, sauvegarde des états.');

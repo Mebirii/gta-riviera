@@ -4,7 +4,7 @@ const {sanitizeProfile}=require('./profile');
 const {server,rooms}=require('./server');
 const {setTimeout:delay}=require('node:timers/promises');
 async function until(msgs,pred){for(let i=0;i<140;i++){const x=msgs.find(pred);if(x)return x;await delay(20);}throw Error('WS timeout '+JSON.stringify(msgs.slice(-3)));}
-const p={name:'Alessia Costa',bio:'Mécanicienne du port',goal:'Aider sa famille',flaw:'Trop fière',portrait:'juliette',color:'#ff82a1',skills:{physique:0,ruse:2,technique:1,bagout:1,pilotage:0},specialty:'ruse'};
+const p={name:'Alessia Costa',bio:'Mécanicienne du port',goal:'Aider sa famille',flaw:'Trop fière',portrait:'juliette',color:'#ff82a1',skills:{physique:0,ruse:2,technique:1,bagout:1,pilotage:0},specialty:'ruse',contactId:'barmaid',flawId:'impulsive'};
 const custom=sanitizeProfile(p);assert.equal(custom.specialty,'ruse');assert.equal(Object.keys(custom.skills).length,5);
 assert.throws(()=>sanitizeProfile({...p,skills:{...p.skills,ruse:3}}));
 assert.throws(()=>sanitizeProfile({...p,skills:{...p.skills,pilotage:1}}));
