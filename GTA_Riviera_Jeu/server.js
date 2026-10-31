@@ -31,7 +31,7 @@ function replyFile(res,file,type,cache='no-cache'){fs.readFile(file,(err,data)=>
 const server=http.createServer((req,res)=>{
  let pathname;try{pathname=new URL(req.url,'http://localhost').pathname;}catch{res.writeHead(400).end();return;}
  if(pathname==='/'||pathname==='/jeu'||pathname==='/GTA_Riviera.html'){replyFile(res,path.join(__dirname,'GTA_Riviera.html'),'text/html; charset=utf-8','no-store');return;}
- if(pathname==='/health'){res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'}).end(JSON.stringify({ok:true,onlinePlayers:[...rooms.values()].reduce((n,r)=>n+livePlayers(r).length,0),rooms:rooms.size}));return;}
+ if(pathname==='/health'){res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'}).end(JSON.stringify({ok:true,persistent:storage.enabled(),onlinePlayers:[...rooms.values()].reduce((n,r)=>n+livePlayers(r).length,0),rooms:rooms.size}));return;}
  if(/^\/assets\/[a-z0-9-]+\.(webp|png|jpg|svg)$/.test(pathname)){const asset=path.join(__dirname,pathname.slice(1));replyFile(res,asset,mime[path.extname(asset)]||'application/octet-stream','public,max-age=86400');return;}
  if(pathname==='/favicon.ico'){res.writeHead(204).end();return;}
  res.writeHead(404).end('Page inconnue');
