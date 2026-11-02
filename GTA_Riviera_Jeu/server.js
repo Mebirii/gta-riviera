@@ -6,6 +6,7 @@ const path=require('node:path');
 const crypto=require('node:crypto');
 const {attachWebSocket,READY_OPEN}=require('./wire');
 const E=require('./engine');
+const MJ=require('./mj-ai');
 const storage=require('./storage');
 const {sanitizeProfile}=require('./profile');
 const PORT=Number(process.env.PORT)||3000;
@@ -22,7 +23,7 @@ function send(ws,obj){if(ws?.readyState===READY_OPEN)ws.send(JSON.stringify(obj)
 function error(ws,message){send(ws,{type:'error',message});}
 function seen(room){room.updatedAt=Date.now();}
 function livePlayers(room){return room.players.filter(x=>x.ws&&x.ws.readyState===READY_OPEN);}
-function snapshot(room,player){return{room:room.code,hostId:room.hostId,you:player.id,players:room.players.map(x=>({id:x.id,name:x.name,character:x.character,connected:!!x.ws&&x.ws.readyState===READY_OPEN,profile:x.profile||null})),persistent:storage.enabled(),imported:!!room.importedCampaign,recoveryKey:player.id===room.hostId?room.recoveryKey:null,eligibleCount:livePlayers(room).length,mission:room.mission,game:room.game?E.publicState(room.game):null,votedIds:Object.keys(room.votes),votedCount:Object.keys(room.votes).length};}
+function snapshot(room,player){return{room:room.code,hostId:room.hostId,you:player.id,players:room.players.map(x=>({id:x.id,name:x.name,character:x.character,connected:!!x.ws&&x.ws.readyState===READY_OPEN,profile:x.profile||null})),persistent:storage.enabled(),imported:!!room.importedCampaign,recoveryKey:player.id===room.hostId?room.recoveryKey:null,eligibleCount:livePlayers(room).length,mission:room.mission,aiMode:!!room.aiMode,aiReady:MJ.configured(),ai:room.aiMode?MJ.publicState(room.ai):null,game:room.game?E.publicState(room.game):null,votedIds:Object.keys(room.votes),votedCount:Object.keys(room.votes).length};}
 function broadcast(room){for(const p of livePlayers(room))send(p.ws,{type:'snapshot',data:snapshot(room,p)});}
 function makePlayer(ws,msg){const hero=E.HEROES.find(x=>x.id===msg.character);const profile=msg.character==='custom'?sanitizeProfile(msg.profile):null;return{id:crypto.randomUUID(),token:crypto.randomBytes(24).toString('hex'),name:safeName(msg.name)||profile?.name||'Joueur',character:profile?profile.id:hero?hero.id:'gauthier',profile,ws};}
 function actor(room,player){return player.profile||E.HEROES.find(x=>x.id===player.character)||E.HEROES[0];}
@@ -31,7 +32,7 @@ function replyFile(res,file,type,cache='no-cache'){fs.readFile(file,(err,data)=>
 const server=http.createServer((req,res)=>{
  let pathname;try{pathname=new URL(req.url,'http://localhost').pathname;}catch{res.writeHead(400).end();return;}
  if(pathname==='/'||pathname==='/jeu'||pathname==='/GTA_Riviera.html'){replyFile(res,path.join(__dirname,'GTA_Riviera.html'),'text/html; charset=utf-8','no-store');return;}
- if(pathname==='/health'){res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'}).end(JSON.stringify({ok:true,persistent:storage.enabled(),onlinePlayers:[...rooms.values()].reduce((n,r)=>n+livePlayers(r).length,0),rooms:rooms.size}));return;}
+ if(pathname==='/health'){res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'}).end(JSON.stringify({ok:true,persistent:storage.enabled(),onlinePlayers:[...rooms.values()].reduce((n,r)=>n+livePlayers(r).length,0),rooms:rooms.size,aiReady:MJ.configured()}));return;}
  if(/^\/assets\/[a-z0-9-]+\.(webp|png|jpg|svg)$/.test(pathname)){const asset=path.join(__dirname,pathname.slice(1));replyFile(res,asset,mime[path.extname(asset)]||'application/octet-stream','public,max-age=86400');return;}
  if(pathname==='/favicon.ico'){res.writeHead(204).end();return;}
  res.writeHead(404).end('Page inconnue');
@@ -46,7 +47,7 @@ attachWebSocket(server,ws=>{
   if(ws.player)return error(ws,'Vous êtes déjà dans un salon.');
   if(rooms.size>=MAX_ROOMS)return error(ws,'Trop de salons actifs, réessayez ultérieurement.');
   const code=roomCode(),p=makePlayer(ws,msg),mission=msg.mission==='belladone'?'belladone':'belladone';
-  const room={code,recoveryKey:crypto.randomBytes(12).toString('hex').toUpperCase(),players:[p],hostId:p.id,game:null,votes:{},mission,difficulty:['facile','normal','difficile'].includes(msg.difficulty)?msg.difficulty:'normal',updatedAt:Date.now()};
+  const room={aiMode:msg.aiMode===true,ai:null,code,recoveryKey:crypto.randomBytes(12).toString('hex').toUpperCase(),players:[p],hostId:p.id,game:null,votes:{},mission,difficulty:['facile','normal','difficile'].includes(msg.difficulty)?msg.difficulty:'normal',updatedAt:Date.now()};
   await checkpoint(room);rooms.set(code,room);register(ws,room,p);return;
  }
  if(msg.type==='join'){
@@ -81,6 +82,7 @@ attachWebSocket(server,ws=>{
  if(!p)return error(ws,'Salon ou joueur introuvable.');
  seen(room);const host=room.hostId===p.id;
  if(msg.type==='world'){
+  if(room.aiMode)return error(ws,'Le mode MJ IA privilégie les actions narratives ; les commerces seront intégrés prochainement.');
   if(!host)return error(ws,'Seul l’hôte gère la caisse et le matériel.');
   if(!room.game||room.game.ended)return error(ws,'Commencez une mission pour accéder à Riviera.');
   if(Object.keys(room.votes).length)return error(ws,'Terminez d’abord le vote en cours.');
@@ -89,9 +91,20 @@ attachWebSocket(server,ws=>{
  if(msg.type==='start'){
   if(!host)return error(ws,'Seul l’hôte peut commencer.');
   if(room.game)return error(ws,'Partie déjà commencée.');
-  if(livePlayers(room).length<2)return error(ws,'Il faut au moins deux joueurs.');
-  room.game=room.importedCampaign||E.createGame(room.difficulty,room.mission);room.importedCampaign=null;E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.votes={};await checkpoint(room);broadcast(room);return;
+  if(livePlayers(room).length<(room.aiMode?1:2))return error(ws,'Il faut au moins deux joueurs.');
+  if(room.aiMode&&!MJ.configured())return error(ws,'Le mode MJ IA nécessite une clé OPENAI_API_KEY configurée sur Render.');
+  room.game=room.importedCampaign||E.createGame(room.difficulty,room.mission);room.importedCampaign=null;E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.ai=room.aiMode?MJ.initial():null;room.votes={};await checkpoint(room);broadcast(room);return;
  }
+ if(msg.type==='ai_action'){
+  if(!room.aiMode||!room.game||!room.ai)return error(ws,'Aucun MJ IA actif dans cette partie.');
+  if(room.ai.busy)return error(ws,'Le MJ répond déjà à un joueur.');
+  if(typeof msg.text!=='string'||msg.text.length>500||!msg.text.trim())return error(ws,'Décrivez votre action en 500 caractères maximum.');
+  if(room.ai.lastActionAt&&Date.now()-room.ai.lastActionAt<3500)return error(ws,'Laissez quelques secondes entre deux actions.');
+  room.ai.busy=true;broadcast(room);
+  try{await MJ.takeTurn(room,p,actor(room,p),msg.text);room.ai.lastActionAt=Date.now();await checkpoint(room);}catch(e){console.error('MJ IA:',e.message);error(ws,e.message);}finally{room.ai.busy=false;broadcast(room);}
+  return;
+ }
+ if(room.aiMode&&['vote','resolve','continue','import'].includes(msg.type))return error(ws,'Utilisez les actions libres dans le mode MJ IA.');
  if(msg.type==='vote'){
   if(!room.game||room.game.ended)return error(ws,'Aucun vote actif.');
   if(!E.getScene(room.game).choices.some(c=>c.id===msg.choice&&c.condition!==false))return error(ws,'Choix non disponible.');
@@ -134,7 +147,7 @@ attachWebSocket(server,ws=>{
  }
  if(msg.type==='restart'){
   if(!host)return error(ws,'Seul l’hôte peut recommencer.');
-  room.game=E.createGame(room.difficulty,room.mission);E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.votes={};await checkpoint(room);broadcast(room);return;
+  room.game=E.createGame(room.difficulty,room.mission);E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.ai=room.aiMode?MJ.initial():null;room.votes={};await checkpoint(room);broadcast(room);return;
  }
  error(ws,'Action inconnue.');
  }catch(e){console.error('Message serveur:',e);error(ws,e.message||'Une erreur serveur est survenue.');}
