@@ -8,12 +8,26 @@ assert(!E.getScene(s).paragraphs.join(' ').includes('montre'));s=E.choose(s,'bel
 let bar=E.getScene(s);assert(!bar.choices.some(x=>x.id==='belle_watch'));assert(bar.choices.some(x=>x.id==='belle_contact'));
 let withAlly=E.choose(s,'belle_contact',hero.id);assert.equal(withAlly.flags.barIntel,true);
 let noAlly=E.createGame();noAlly=E.choose(noAlly,'belle_go');noAlly=E.choose(noAlly,'belle_accept');noAlly=E.choose(noAlly,'belle_bar');assert(!E.getScene(noAlly).choices.some(x=>x.id==='belle_contact'&&x.condition!==false));
-let money=s.stats.money;
-let gear=E.worldAction(s,'buy','sneakers');assert.equal(gear.stats.money,money-100);assert.equal(gear.inventory.sneakers,1);assert.equal(E.worldAction(gear,'equip','sneakers').equipped,'sneakers');
-const testWithout=E.choose(s,'belle_observe',hero.id,6),testWith=E.choose(E.worldAction(gear,'equip','sneakers'),'belle_observe',hero.id,6);assert.equal(testWith.last.total,testWithout.last.total+1);
-let drink=E.worldAction(gear,'buy','espresso');drink=E.worldAction(drink,'use','espresso');assert.equal(drink.prepared.bonus,2);let after=E.choose(drink,'belle_observe',hero.id,6);assert.equal(after.prepared,null);assert.equal(after.last.total,testWithout.last.total+2);
-assert.throws(()=>E.worldAction(drink,'use','espresso'));assert.throws(()=>E.worldAction(E.worldAction(s,'buy','vest'),'buy','signal'));
-let clinic=E.worldAction(s,'service','doctor');assert.equal(clinic.stats.money,s.stats.money-120);assert.equal(clinic.stats.morale,s.stats.morale+1);assert.throws(()=>E.worldAction(clinic,'service','doctor'));
+// Les achats se font dans les quartiers, avant d'entrer au Belladone.
+let market=E.createGame();E.prepareCrew(market,[hero]);
+market=E.worldAction(market,'travel','centre-ville');
+const money=market.stats.money;
+const gear=E.worldAction(market,'buy','sneakers');
+assert.equal(gear.stats.money,money-100);assert.equal(gear.inventory.sneakers,1);
+assert.equal(E.worldAction(gear,'equip','sneakers').equipped,'sneakers');
+const atBar=g=>E.choose(E.choose(E.choose(g,'belle_go',hero.id),'belle_accept',hero.id),'belle_bar',hero.id);
+const testWithout=E.choose(s,'belle_observe',hero.id,6);
+const testWith=E.choose(E.worldAction(atBar(gear),'equip','sneakers'),'belle_observe',hero.id,6);
+assert.equal(testWith.last.total,testWithout.last.total+1);
+let drink=E.worldAction(gear,'buy','espresso');drink=E.worldAction(drink,'use','espresso');
+assert.equal(drink.prepared.bonus,2);
+let after=E.choose(atBar(drink),'belle_observe',hero.id,6);
+assert.equal(after.prepared,null);assert.equal(after.last.total,testWithout.last.total+2);
+assert.throws(()=>E.worldAction(drink,'use','espresso'));
+assert.throws(()=>E.worldAction(s,'buy','vest'));
+let clinic=E.worldAction(E.worldAction(E.createGame(),'travel','vieille-ville'),'service','doctor');
+assert.equal(clinic.stats.money,180);assert.equal(clinic.stats.morale,4);
+assert.throws(()=>E.worldAction(clinic,'service','doctor'));
 let debtor=E.createGame();E.prepareCrew(debtor,[sanitizeProfile({...base,flawId:'indebted'})]);assert.equal(debtor.stats.money,150);
 let wanted=E.createGame();E.prepareCrew(wanted,[sanitizeProfile({...base,flawId:'wanted'})]);assert.equal(wanted.stats.heat,2);
 let unlucky=E.createGame();E.prepareCrew(unlucky,[hero]);unlucky=E.choose(unlucky,'belle_scout',hero.id,2);assert.equal(unlucky.stats.heat,2); // 1 base failure, +1 critical from flaw
