@@ -3,8 +3,12 @@ const assert=require('node:assert/strict');
 process.env.GEMINI_API_KEY='test-only-mock';
 const oldFetch=global.fetch;
 let calls=0;
-global.fetch=async()=>{
+global.fetch=async(url,options)=>{
  calls++;
+ assert(url.startsWith('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'));
+ assert.equal(options.headers['x-goog-api-key'],'test-only-mock');
+ assert.equal(JSON.parse(options.body).generationConfig.responseMimeType,'application/json');
+ assert(!JSON.stringify(options.body).includes('api.openai.com'));
  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({narration:'Le garage des Tamaris apparaît au détour de la rue. Vous êtes encore libres de vos actes.',rollSkill:'none',rollDC:9,advance:false,memory:'Alex a pris le temps de réfléchir.',evidence:'none'})}]}}]})};
 };
 const {server,rooms}=require('./server');
