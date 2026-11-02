@@ -1,11 +1,11 @@
 {
   "name": "gta-riviera-campagne",
-  "version": "6.0.0",
+  "version": "7.0.0",
   "private": true,
-  "description": "GTA Riviera JDR - monde ouvert avec quartiers, inventaire, scénario original et multijoueur",
+  "description": "GTA Riviera JDR narratif : scénario original, salons multijoueurs et maître du jeu IA",
   "scripts": {
     "start": "node server.js",
-    "test": "node test-v4.js && node test-ui-v4.js && node test-v5.js && node test-online-v5.js && node test-v6.js && node test-ui-v6.js"
+    "test": "node test-v4.js && node test-ui-v4.js && node test-v5.js && node test-online-v5.js && node test-v6.js && node test-ui-v6.js && node test-mj.js && node test-mj-online.js"
   },
   "dependencies": {
     "pg": "8.16.3"
