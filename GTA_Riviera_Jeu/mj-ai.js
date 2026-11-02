@@ -56,7 +56,7 @@ async function ask(input){
    body:JSON.stringify({
     systemInstruction:{parts:[{text:rules}]},
     contents:[{role:'user',parts:[{text:JSON.stringify(input)}]}],
-    generationConfig:{responseMimeType:'application/json',responseSchema:format,maxOutputTokens:1100,temperature:0.65}
+    generationConfig:{responseMimeType:'application/json',responseJsonSchema:format,maxOutputTokens:1100,temperature:0.65}
    })
   });
   if(!res.ok){
