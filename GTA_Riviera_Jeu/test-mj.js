@@ -1,0 +1,30 @@
+'use strict';
+const assert=require('node:assert/strict');
+const E=require('./engine'),MJ=require('./mj-ai'),storage=require('./storage');
+const player={id:'p1',name:'Alex',character:'yanis',profile:null,ws:null};
+const hero=E.HEROES.find(h=>h.id==='yanis');
+const room={aiMode:true,ai:MJ.initial(),game:E.createGame(),players:[player],mission:'belladone',difficulty:'normal',room:'ABCDE',code:'ABCDE',hostId:'p1',recoveryKey:'SECRET',updatedAt:Date.now()};
+assert.equal(MJ.STAGES.length,6);
+assert.equal(room.ai.stage,0);
+assert(!room.ai.log[0].text.includes('Nérée'));
+async function run(){
+ let calls=0;
+ const first=async()=>{calls++;return{narration:'Vous observez le garage. La porte de service est ouverte.',rollSkill:'none',rollDC:9,advance:true,memory:'Alex a examiné le garage.',evidence:'full'};};
+ await MJ.takeTurn(room,player,hero,'Je vais observer le garage.',first);
+ assert.equal(calls,1);assert.equal(room.ai.stage,1);
+ assert.equal(room.game.scene,'belle_brief');
+ assert.equal(room.game.flags.full,false,'no evidence in prologue');
+ assert.equal(room.ai.log.filter(x=>x.kind==='joueur').length,1);
+ assert.equal(room.ai.memory,'Alex a examiné le garage.');
+ let count=0;
+ const withDice=async input=>{count++;return{narration:count===1?'La discussion s’annonce tendue.':'Lucien réagit au résultat du jet.',rollSkill:count===1?'bagout':'none',rollDC:9,advance:false,memory:'Alex a négocié avec Lucien.',evidence:'none'};};
+ await MJ.takeTurn(room,player,hero,'Je négocie avec Lucien.',withDice);
+ assert.equal(count,2);assert.equal(room.ai.stage,1);
+ assert(room.ai.log.some(x=>x.kind==='des'));
+ assert.equal(room.ai.turns,2);
+ const saved=storage.pack(room);assert.equal(saved.aiMode,true);assert.equal(saved.ai.log.length,room.ai.log.length);
+ const restored=storage.unpack(saved);assert.equal(restored.ai.stage,1);assert.equal(restored.players[0].ws,null);
+ assert.equal(MJ.publicState(room.ai).memory,undefined,'private memory should not be exposed');
+ console.log('MJ IA : progression canonique, dés côté serveur, mémoire privée, sauvegarde, interdiction des spoilers OK.');
+}
+run().catch(e=>{console.error(e);process.exitCode=1;});
