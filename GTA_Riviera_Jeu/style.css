@@ -177,3 +177,34 @@ body{background:radial-gradient(circle at 50% 0,#26354e 0,#0b1422 45%,#080d18 85
 @media(max-width:650px){.trait-grid{grid-template-columns:1fr}.portrait-choice{width:66px;height:74px}.inventory-item,.shop-item{grid-template-columns:27px minmax(0,1fr) auto}.shop-item button{padding:6px}.world-actions{max-width:100px}}
 
 .city-shortcut{background:#101d2b;padding:12px 22px;border-top:1px solid #4a6070}.city-shortcut a{color:#f5c688;font-size:12px;font-weight:800;text-decoration:none}.city-shortcut a:hover{text-decoration:underline}
+
+
+/* GTA Riviera V6 — carte et vie des quartiers */
+.riviera-explore{background:linear-gradient(145deg,#14263a,#0b1624);border:1px solid #617187;border-radius:13px;overflow:hidden;margin:20px 0 24px;box-shadow:0 22px 48px #0005}
+.explore-heading{padding:20px 22px 15px;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.explore-heading h2{font-size:33px;margin:2px 0 5px}
+.explore-heading p{color:#becbd9;font-size:12px;margin:0;max-width:520px}
+.explore-heading>strong{background:#263947;border:1px solid #87a99e;color:#d5ffef;padding:8px 12px;border-radius:9px;white-space:nowrap;font-size:12px}
+.riviera-map-canvas{height:310px;position:relative;isolation:isolate;overflow:hidden;background:#1c3242}
+.riviera-map-canvas>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:contrast(1.1) saturate(.75)}
+.riviera-map-shade{position:absolute;inset:0;background:linear-gradient(90deg,#06142688,#09213244,#10172580);pointer-events:none}
+.district-pin{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;min-width:105px;max-width:126px;padding:6px 8px;background:#101c2ce8;color:#fff;border:1px solid #74bfc0;border-radius:9px;font-size:11px;line-height:1.2;box-shadow:0 8px 20px #000b;transition:background .15s,border-color .15s,scale .15s}
+.district-pin span{font-size:21px}.district-pin b{font-size:11px;text-align:center}
+.district-pin:hover:not(:disabled){background:#25485b;border-color:#fff;scale:1.05}
+.district-pin.active,.district-pin.active:disabled{opacity:1;background:#6e4539;border-color:#ffc17b;color:#fff;box-shadow:0 0 0 3px #f5ba7555,0 8px 25px #000a}
+.district-pin:disabled:not(.active){opacity:.6}
+.district-details{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;padding:17px 22px}
+.district-description small{color:#7fd6d1;letter-spacing:1.3px;text-transform:uppercase;font-size:10px}
+.district-description h3{font-size:23px;margin:3px 0 7px}
+.district-description p{font-size:12px;color:#c1ccd9;line-height:1.65}
+.district-local-label{border-top:1px solid #3c5265;padding-top:10px;color:#e8d2af!important;font-size:11px!important}
+.district-activities{display:flex;flex-direction:column;gap:8px}
+.district-activities .minor{margin:0 0 3px;font-size:11px;color:#aac0cd}
+.district-event{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1a2a3c;border:1px solid #344a5d;border-radius:9px;padding:8px 10px}
+.district-event>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.district-event b{font-size:12px}.district-event small{font-size:10px;color:#b6c7d4}
+.district-event button{flex:none;padding:8px 10px;background:#273d4b;border:1px solid #73969e;border-radius:6px;font-size:10px;font-weight:800;color:#eafaff}
+.district-event button:hover:not(:disabled){background:#376376}
+.explore-locked{color:#ffca9c;font-size:12px;margin:0}
+.explore-footnote{padding:8px 22px 13px;border-top:1px solid #31495b;color:#a1b5c3;font-size:11px;margin:0}
+@media(max-width:650px){.explore-heading{padding:14px;align-items:flex-start;flex-direction:column}.explore-heading h2{font-size:27px}.riviera-map-canvas{height:260px}.district-pin{min-width:66px;max-width:85px;padding:5px 3px;font-size:9px}.district-pin b{font-size:9px}.district-pin span{font-size:17px}.district-details{grid-template-columns:1fr;padding:14px;gap:10px}.explore-footnote{padding:10px 14px}.district-event{padding:7px}}
