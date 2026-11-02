@@ -1,11 +1,11 @@
 'use strict';
 const assert=require('node:assert/strict');
-process.env.OPENAI_API_KEY='test-only-mock';
+process.env.GEMINI_API_KEY='test-only-mock';
 const oldFetch=global.fetch;
 let calls=0;
 global.fetch=async()=>{
  calls++;
- return {ok:true,json:async()=>({output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({narration:'Le garage des Tamaris apparaît au détour de la rue. Vous êtes encore libres de vos actes.',rollSkill:'none',rollDC:9,advance:false,memory:'Alex a pris le temps de réfléchir.',evidence:'none'})}]}]})};
+ return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({narration:'Le garage des Tamaris apparaît au détour de la rue. Vous êtes encore libres de vos actes.',rollSkill:'none',rollDC:9,advance:false,memory:'Alex a pris le temps de réfléchir.',evidence:'none'})}]}}]})};
 };
 const {server,rooms}=require('./server');
 const delay=require('node:timers/promises').setTimeout;
