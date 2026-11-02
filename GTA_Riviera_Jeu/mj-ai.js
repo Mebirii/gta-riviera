@@ -9,7 +9,7 @@ const STAGES=[
  {label:'Les conséquences',brief:'Fuite, remise du dossier ou négociation. Les suites dépendent des faits de CETTE campagne. Gauthier ne connaît ni ne mémorise d’avance le dossier.'}
 ];
 const SKILLS=['physique','ruse','technique','bagout','pilotage'];
-const configured=()=>!!process.env.OPENAI_API_KEY;
+const configured=()=>!!process.env.GEMINI_API_KEY;
 const initial=()=>({stage:0,turns:0,memory:'',log:[{id:'intro',kind:'mj',text:'Riviera d’Oro, 1991. Le soir tombe sur la ville. Un message anonyme arrive : « 20 h. Garage des Tamaris. Demandez Lucien. Venez seuls. » Que faites-vous ?',at:Date.now()}],busy:false});
 const publicState=s=>s?{stage:STAGES[s.stage]?.label||STAGES[0].label,turns:s.turns,log:s.log.slice(-40),busy:!!s.busy}:null;
 const format={type:'object',additionalProperties:false,properties:{narration:{type:'string'},rollSkill:{type:'string',enum:['none',...SKILLS]},rollDC:{type:'integer',enum:[7,9,11,13]},advance:{type:'boolean'},memory:{type:'string'},evidence:{type:'string',enum:['none','half','full']}},required:['narration','rollSkill','rollDC','advance','memory','evidence']};
@@ -34,26 +34,36 @@ function requestPayload(room,player,hero,action,rollResult){
  ...(rollResult?{resultatOfficiel:rollResult,consigne:'Décris la conséquence EXACTE du jet. Ne demande pas un nouveau jet. Ne change pas les règles ni le résultat.'}:{})};
 }
 function parse(response){
- const chunks=(response.output||[]).filter(x=>x.type==='message').flatMap(x=>x.content||[]).filter(x=>x.type==='output_text').map(x=>x.text);
- const data=JSON.parse(chunks.join('')||response.output_text||'{}');
+ const chunks=(response.candidates||[]).flatMap(x=>x.content?.parts||[]).filter(x=>typeof x.text==='string').map(x=>x.text);
+ const data=JSON.parse(chunks.join('')||'{}');
  if(typeof data.narration!=='string'||!data.narration.trim()||!['none',...SKILLS].includes(data.rollSkill))throw Error('Réponse IA invalide.');
  return data;
 }
 let callsInWindow=0,windowStart=Date.now();
 async function ask(input){
- if(!configured())throw Error('MJ IA non configuré : renseigner OPENAI_API_KEY dans Render.');
+ // Aucune facturation OpenAI : le MJ utilise exclusivement la clé du projet Gemini Free.
+ if(!configured())throw Error('MJ IA non configuré : renseigner GEMINI_API_KEY depuis Google AI Studio dans Render.');
  if(Date.now()-windowStart>3600000){windowStart=Date.now();callsInWindow=0;}
- const maxCalls=Math.max(20,Math.min(300,Number(process.env.MJ_AI_MAX_CALLS_PER_HOUR)||120));
- if(callsInWindow>=maxCalls)throw Error('Quota horaire de sécurité du MJ IA atteint.');
+ const maxCalls=Math.max(20,Math.min(300,Number(process.env.MJ_AI_MAX_CALLS_PER_HOUR)||80));
+ if(callsInWindow>=maxCalls)throw Error('Quota horaire local du MJ IA atteint. Réessayez plus tard.');
  callsInWindow++;
- const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),25000);
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),30000);
  try{
-  const res=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:ctrl.signal,
-   headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY,'Content-Type':'application/json'},
-   body:JSON.stringify({model:process.env.OPENAI_MJ_MODEL||'gpt-5-mini',store:false,
-    max_output_tokens:850,instructions:rules,input:[{role:'user',content:JSON.stringify(input)}],
-    text:{format:{type:'json_schema',name:'riviera_mj',strict:true,schema:format}}})});
-  if(!res.ok)throw Error(res.status===401?'Clé API IA invalide.':res.status===429?'Quota ou limite de l’API IA atteint.':'Réponse IA indisponible ('+res.status+').');
+  const model='gemini-2.5-flash-lite';
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
+   method:'POST',signal:ctrl.signal,
+   headers:{'x-goog-api-key':process.env.GEMINI_API_KEY,'Content-Type':'application/json'},
+   body:JSON.stringify({
+    systemInstruction:{parts:[{text:rules}]},
+    contents:[{role:'user',parts:[{text:JSON.stringify(input)}]}],
+    generationConfig:{responseMimeType:'application/json',responseSchema:format,maxOutputTokens:1100,temperature:0.65}
+   })
+  });
+  if(!res.ok){
+   if(res.status===401||res.status===403)throw Error('Clé Gemini refusée ou projet non autorisé au niveau gratuit.');
+   if(res.status===429)throw Error('Quota gratuit Gemini atteint : réessayez après sa réinitialisation.');
+   throw Error('API Gemini momentanément indisponible ('+res.status+').');
+  }
   return parse(await res.json());
  }finally{clearTimeout(timer);}
 }
@@ -73,7 +83,7 @@ function evidence(game,value,stage){
 }
 async function takeTurn(room,player,hero,text,request=ask){
  const ai=room.ai;if(!ai||!room.game)throw Error('La partie MJ IA n’a pas commencé.');
- if(request===ask&&!configured())throw Error('MJ IA non configuré : OPENAI_API_KEY manque sur Render.');
+ if(request===ask&&!configured())throw Error('MJ IA non configuré : GEMINI_API_KEY manque sur Render.');
  if(typeof text!=='string'||!text.trim()||text.length>500)throw Error('Décrivez une action de 1 à 500 caractères.');
  if(ai.turns>=80)throw Error('Limite de 80 interventions dans cette campagne de démonstration.');
  const action=text.trim(),proposed=await request(requestPayload(room,player,hero,action,null));
