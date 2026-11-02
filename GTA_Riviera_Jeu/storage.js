@@ -15,8 +15,8 @@ async function init(){
  const {rows}=await pool.query('SELECT code, snapshot FROM riviera_campaigns ORDER BY updated_at DESC LIMIT 500');
  return rows;
 }
-function pack(room){return{version:3,code:room.code,hostId:room.hostId,recoveryKey:room.recoveryKey,mission:room.mission,difficulty:room.difficulty,updatedAt:room.updatedAt,game:room.game,importedCampaign:room.importedCampaign||null,players:room.players.map(({id,token,name,character,profile})=>({id,token,name,character,profile}))};}
-function unpack(data){if(!data||data.version!==3||!Array.isArray(data.players)||!data.players.length||data.players.length>4||!data.code||data.code.length!==5)return null;return {...data,votes:{},players:data.players.map(p=>({...p,ws:null}))};}
+function pack(room){return{version:3,code:room.code,hostId:room.hostId,recoveryKey:room.recoveryKey,mission:room.mission,difficulty:room.difficulty,updatedAt:room.updatedAt,aiMode:!!room.aiMode,ai:room.ai?{...room.ai,busy:false}:null,game:room.game,importedCampaign:room.importedCampaign||null,players:room.players.map(({id,token,name,character,profile})=>({id,token,name,character,profile}))};}
+function unpack(data){if(!data||data.version!==3||!Array.isArray(data.players)||!data.players.length||data.players.length>4||!data.code||data.code.length!==5)return null;return {...data,aiMode:!!data.aiMode,ai:data.ai?{...data.ai,busy:false}:null,votes:{},players:data.players.map(p=>({...p,ws:null}))};}
 async function save(room){if(!pool)return;await pool.query('INSERT INTO riviera_campaigns(code,snapshot,updated_at) VALUES($1,$2::jsonb,now()) ON CONFLICT (code) DO UPDATE SET snapshot=EXCLUDED.snapshot, updated_at=now()', [room.code,JSON.stringify(pack(room))]);}
 async function close(){if(pool)await pool.end();}
 module.exports={enabled,init,pack,unpack,save,close};
