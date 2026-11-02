@@ -93,7 +93,7 @@ attachWebSocket(server,ws=>{
   if(room.game)return error(ws,'Partie déjà commencée.');
   if(livePlayers(room).length<(room.aiMode?1:2))return error(ws,'Il faut au moins deux joueurs.');
   if(room.aiMode&&!MJ.configured())return error(ws,'Le mode MJ IA nécessite une clé OPENAI_API_KEY configurée sur Render.');
-  room.game=room.importedCampaign||E.createGame(room.difficulty,room.mission);room.importedCampaign=null;E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.ai=room.aiMode?MJ.initial():null;room.votes={};await checkpoint(room);broadcast(room);return;
+  room.game=room.importedCampaign||E.createGame(room.difficulty,room.mission);room.importedCampaign=null;E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.ai=room.aiMode?(room.importedAI||MJ.initial()):null;room.importedAI=null;room.votes={};await checkpoint(room);broadcast(room);return;
  }
  if(msg.type==='ai_action'){
   if(!room.aiMode||!room.game||!room.ai)return error(ws,'Aucun MJ IA actif dans cette partie.');
@@ -104,7 +104,7 @@ attachWebSocket(server,ws=>{
   try{await MJ.takeTurn(room,p,actor(room,p),msg.text);room.ai.lastActionAt=Date.now();await checkpoint(room);}catch(e){console.error('MJ IA:',e.message);error(ws,e.message);}finally{room.ai.busy=false;broadcast(room);}
   return;
  }
- if(room.aiMode&&['vote','resolve','continue','import'].includes(msg.type))return error(ws,'Utilisez les actions libres dans le mode MJ IA.');
+ if(room.aiMode&&['vote','resolve','continue'].includes(msg.type))return error(ws,'Utilisez les actions libres dans le mode MJ IA.');
  if(msg.type==='vote'){
   if(!room.game||room.game.ended)return error(ws,'Aucun vote actif.');
   if(!E.getScene(room.game).choices.some(c=>c.id===msg.choice&&c.condition!==false))return error(ws,'Choix non disponible.');
@@ -132,7 +132,7 @@ attachWebSocket(server,ws=>{
  if(msg.type==='backup'){
   if(!host)return error(ws,'Seul l’hôte peut exporter.');
   if(!room.game)return error(ws,'Commencez une mission avant de l’exporter.');
-  send(ws,{type:'backup',data:{version:3,exportedAt:new Date().toISOString(),mission:room.mission,difficulty:room.difficulty,game:room.game,team:room.players.map(p=>({name:p.name,profile:p.profile,character:p.character}))}});return;
+  send(ws,{type:'backup',data:{version:3,exportedAt:new Date().toISOString(),mission:room.mission,difficulty:room.difficulty,aiMode:!!room.aiMode,ai:room.aiMode?{...room.ai,busy:false}:null,game:room.game,team:room.players.map(p=>({name:p.name,profile:p.profile,character:p.character}))}});return;
  }
  if(msg.type==='import'){
   if(!host)return error(ws,'Seul l’hôte peut importer.');
@@ -142,6 +142,8 @@ attachWebSocket(server,ws=>{
   const game=JSON.parse(JSON.stringify(b.game));
   if(![1,4,5].includes(game.version)||!Number.isInteger(game.round)||game.round<0||game.round>10000||!game.stats||!game.flags||!Array.isArray(game.journal)||!Array.isArray(game.history)||game.history.length>10000||game.journal.length>100)return error(ws,'Format de campagne non pris en charge.');
   try{E.getScene(game);}catch{return error(ws,'Cette scène ne peut pas être chargée.');}
+  if(room.aiMode!==!!b.aiMode)return error(ws,'Cette sauvegarde appartient à un autre mode de jeu.');
+  if(room.aiMode){const ai=b.ai;if(!ai||!Number.isInteger(ai.stage)||ai.stage<0||ai.stage>=MJ.STAGES.length||!Number.isInteger(ai.turns)||ai.turns<0||ai.turns>80||typeof ai.memory!=='string'||ai.memory.length>600||!Array.isArray(ai.log)||ai.log.length>60||ai.log.some(x=>typeof x.text!=='string'||x.text.length>1600))return error(ws,'Sauvegarde MJ IA invalide.');room.importedAI={stage:ai.stage,turns:ai.turns,memory:ai.memory,log:ai.log,busy:false};}
   room.importedCampaign=game;
   await checkpoint(room);broadcast(room);return;
  }
