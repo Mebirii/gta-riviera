@@ -72,7 +72,7 @@ async function takeTurn(room,player,hero,text,request=ask){
  if(typeof text!=='string'||!text.trim()||text.length>500)throw Error('Décrivez une action de 1 à 500 caractères.');
  if(ai.turns>=80)throw Error('Limite de 80 interventions dans cette campagne de démonstration.');
  const action=text.trim(),proposed=await request(requestPayload(room,player,hero,action,null));
- const nextGame=JSON.parse(JSON.stringify(room.game));let result=null,narration=proposed.narration,memory=proposed.memory;
+ const nextGame=JSON.parse(JSON.stringify(room.game));const stageScenes=['belle_open','belle_brief','belle_prep','belle_barroom','belle_suite','belle_exit'];nextGame.scene=stageScenes[ai.stage]||'belle_open';let result=null,narration=proposed.narration,memory=proposed.memory;
  if(proposed.rollSkill!=='none'&&SKILLS.includes(proposed.rollSkill)){
   const dc=[7,9,11,13].includes(proposed.rollDC)?proposed.rollDC:9;
   result=dice(nextGame,hero,proposed.rollSkill,dc);
@@ -88,7 +88,7 @@ async function takeTurn(room,player,hero,text,request=ask){
  if(result)ai.log.push({id:crypto.randomUUID(),kind:'des',who:player.profile?.name||player.name,text:result.competence+' · '+result.des.join('+')+' = '+result.total+' / '+result.seuil+' · '+(result.reussite?'Réussite':'Échec'),at:Date.now()});
  ai.log.push({id:crypto.randomUUID(),kind:'mj',text:narration.slice(0,1600),at:Date.now()});
  ai.log=ai.log.slice(-60);ai.memory=String(memory||ai.memory).slice(0,600);ai.turns++;
- if(proposed.advance&&ai.stage<STAGES.length-1)ai.stage++;
+ if(proposed.advance&&ai.stage<STAGES.length-1){ai.stage++;room.game.scene=stageScenes[ai.stage];}
  return publicState(ai);
 }
 module.exports={STAGES,configured,initial,publicState,dice,takeTurn,requestPayload,parse};
