@@ -39,8 +39,13 @@ function parse(response){
  if(typeof data.narration!=='string'||!data.narration.trim()||!['none',...SKILLS].includes(data.rollSkill))throw Error('Réponse IA invalide.');
  return data;
 }
+let callsInWindow=0,windowStart=Date.now();
 async function ask(input){
  if(!configured())throw Error('MJ IA non configuré : renseigner OPENAI_API_KEY dans Render.');
+ if(Date.now()-windowStart>3600000){windowStart=Date.now();callsInWindow=0;}
+ const maxCalls=Math.max(20,Math.min(300,Number(process.env.MJ_AI_MAX_CALLS_PER_HOUR)||120));
+ if(callsInWindow>=maxCalls)throw Error('Quota horaire de sécurité du MJ IA atteint.');
+ callsInWindow++;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),25000);
  try{
   const res=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:ctrl.signal,
