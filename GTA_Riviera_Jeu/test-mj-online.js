@@ -8,6 +8,7 @@ global.fetch=async(url,options)=>{
  assert(url.startsWith('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'));
  assert.equal(options.headers['x-goog-api-key'],'test-only-mock');
  assert.equal(JSON.parse(options.body).generationConfig.responseMimeType,'application/json');
+ assert.equal(JSON.parse(options.body).generationConfig.responseJsonSchema.type,'object');
  assert(!JSON.stringify(options.body).includes('api.openai.com'));
  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({narration:'Le garage des Tamaris apparaît au détour de la rue. Vous êtes encore libres de vos actes.',rollSkill:'none',rollDC:9,advance:false,memory:'Alex a pris le temps de réfléchir.',evidence:'none'})}]}}]})};
 };
