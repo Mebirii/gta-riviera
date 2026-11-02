@@ -89,7 +89,7 @@ function aiLobby(){
  ${room.isHost&&room.recoveryKey?`<div class="recovery-key"><small>CLÉ PRIVÉE POUR RÉCUPÉRER LA PARTIE</small><code>${h(room.recoveryKey)}</code><button class="btn btn-outline btn-xs" data-action="copy-recovery">COPIER LA CLÉ</button></div>`:''}
  <div class="lobby-roster">${(room.players||[]).map(p=>'<div class="lobby-player"><b>'+h(p.profile?.name||p.name)+'</b><small>'+(p.connected?'● PRÉSENT':'○ HORS LIGNE')+'</small></div>').join('')}</div>
  ${room.isHost?`<div class="backup-import"><label>↥ IMPORTER UNE CAMPAGNE MJ IA <input type="file" data-field="import-file" accept=".json,application/json"/></label><small>${room.imported?'✓ Campagne importée et prête à reprendre.':'Réutilisez un export de cette campagne MJ IA.'}</small></div><button class="btn btn-primary btn-large" data-action="start-online" ${canStart?'':'disabled'}>LANCER LA CAMPAGNE AVEC LE MJ IA ✦</button>`:'<div class="vote-notice">En attente du lancement par l’hôte…</div>'}
- ${!room.aiReady?'<p class="warning">Le moteur IA est installé mais n’est pas encore activé. Configurez OPENAI_API_KEY dans Render pour jouer.</p>':''}
+ ${!room.aiReady?'<p class="warning">Le moteur IA est installé mais n’est pas encore activé. Configurez GEMINI_API_KEY dans Render pour jouer.</p>':''}
  <button class="btn btn-subtle" data-action="home">Quitter le salon</button>${ui.error?`<p class="warning">${h(ui.error)}</p>`:''}</main>`;
 }
 function aiPlay(){
