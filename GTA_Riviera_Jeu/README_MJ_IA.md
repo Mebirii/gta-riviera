@@ -19,18 +19,22 @@ Le vol de la montre du Belladone était une improvisation de la partie papier et
 
 Les instructions et briefs narratifs sont **côté serveur** ; la réponse publique contient les actions jouées, le récit, les dés et les informations déjà révélées. L'état des campagnes et les événements sont enregistrés selon la configuration de stockage.
 
-## Activer l'IA sur Render
+## Activer l'IA gratuitement avec Gemini
 
-L'abonnement ChatGPT **ne donne pas automatiquement une clé API ni un crédit API**.
+**Aucun abonnement OpenAI API n'est nécessaire.** Le MJ utilise exclusivement l'API Gemini avec le modèle `gemini-2.5-flash-lite`. Nous ne conservons pas de recours automatique à une API payante. La clé `OPENAI_API_KEY` n'est plus utilisée.
 
-Dans le tableau de bord du service Render **gta-riviera**, ajouter une **variable d'environnement secrète** `OPENAI_API_KEY` avec une clé API OpenAI valide ; ne jamais l'inscrire dans un fichier GitHub, une URL ou un chat public.
+1. Dans [Google AI Studio](https://aistudio.google.com/apikey), créer une clé Gemini dans un projet **Free Tier** (niveau gratuit, sans activation de la facturation).
+2. Vérifier dans Google AI Studio que le projet reste au niveau **Free**. Ne pas passer au niveau payant.
+3. Dans Render > gta-riviera > **Environment**, ajouter une variable **secrète** `GEMINI_API_KEY`, puis sauvegarder pour relancer le service.
+4. Le mode MJ IA s'activera automatiquement dès que le serveur dispose de cette clé.
+
+Le niveau gratuit est soumis aux limites propres au compte et au modèle (requêtes, tokens, quotas quotidiens). Quand ces limites sont atteintes, le MJ affiche une erreur de quota au lieu de basculer vers un service payant. Le jeu conserve sa progression existante.
+
+**Confidentialité :** l'offre gratuite Gemini peut utiliser les textes transmis pour améliorer les produits de Google. N'entrez pas de données personnelles sensibles dans les récits de partie. Une clé API doit rester secrète sur Render, jamais dans GitHub ni le navigateur.
 
 Variables optionnelles :
-- `OPENAI_MJ_MODEL` : modèle Responses API, par défaut `gpt-5-mini`.
-- `MJ_AI_MAX_CALLS_PER_HOUR` : plafond horaire de sécurité, 120 par défaut, borné entre 20 et 300.
-- `DATABASE_URL` : PostgreSQL pour sauvegarder et reprendre les salons après un redémarrage Render. Sans PostgreSQL, utiliser les exports JSON pour les campagnes en cours.
-
-Le backend envoie les requêtes à la **Responses API** d'OpenAI, avec `store: false`. Des frais d'API sont facturés à l'usage selon le modèle et le volume de texte. Les actions simples utilisent une requête ; les actions nécessitant un jet en utilisent deux pour décrire le résultat. Les campagnes sont limitées à 80 interventions pour le prototype.
+- `MJ_AI_MAX_CALLS_PER_HOUR` : maximum local de requêtes d'IA sur une heure (80 par défaut). Une action risquée utilise deux appels (un pour proposer le jet et un pour raconter son résultat).
+- `DATABASE_URL` : PostgreSQL pour sauvegarder les salons après redémarrage de Render. Sans base permanente, exporter régulièrement la partie en JSON.
 
 ## Limites du prototype V7
 
@@ -42,4 +46,4 @@ Le backend envoie les requêtes à la **Responses API** d'OpenAI, avec `store: f
 
 ## Tests
 
-`npm test` : tests historiques de la campagne, interface, inventaire et multijoueur, plus les tests MJ IA sans véritable appel facturé à OpenAI.
+`npm test` : tests historiques de la campagne, interface, inventaire et multijoueur, plus les tests MJ IA sans véritable appel à Gemini (API simulée).
