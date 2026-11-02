@@ -92,7 +92,7 @@ attachWebSocket(server,ws=>{
   if(!host)return error(ws,'Seul l’hôte peut commencer.');
   if(room.game)return error(ws,'Partie déjà commencée.');
   if(livePlayers(room).length<(room.aiMode?1:2))return error(ws,'Il faut au moins deux joueurs.');
-  if(room.aiMode&&!MJ.configured())return error(ws,'Le mode MJ IA nécessite une clé OPENAI_API_KEY configurée sur Render.');
+  if(room.aiMode&&!MJ.configured())return error(ws,'Le mode MJ IA nécessite une clé GEMINI_API_KEY configurée sur Render.');
   room.game=room.importedCampaign||E.createGame(room.difficulty,room.mission);room.importedCampaign=null;E.prepareCrew(room.game,room.players.map(p=>actor(room,p)));room.ai=room.aiMode?(room.importedAI||MJ.initial()):null;room.importedAI=null;room.votes={};await checkpoint(room);broadcast(room);return;
  }
  if(msg.type==='ai_action'){
