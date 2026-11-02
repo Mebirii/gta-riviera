@@ -32,5 +32,5 @@ let debtor=E.createGame();E.prepareCrew(debtor,[sanitizeProfile({...base,flawId:
 let wanted=E.createGame();E.prepareCrew(wanted,[sanitizeProfile({...base,flawId:'wanted'})]);assert.equal(wanted.stats.heat,2);
 let unlucky=E.createGame();E.prepareCrew(unlucky,[hero]);unlucky=E.choose(unlucky,'belle_scout',hero.id,2);assert.equal(unlucky.stats.heat,2); // 1 base failure, +1 critical from flaw
 assert.equal(E.publicState(gear).inventory.sneakers,1);
-const fs=require('node:fs');const html=fs.readFileSync('GTA_Riviera.html','utf8');assert(html.includes('Le Bazar des Quais'));assert(html.includes('portrait-extra-12'));assert(html.includes('DÉFAUT'));assert(!html.includes('Essayer de dérober la montre du client'));
+const fs=require('node:fs');const html=fs.readFileSync('GTA_Riviera.html','utf8');assert(html.includes('Le Bazar des Quais'));assert(html.includes('Array.from({length:12}'));assert(fs.existsSync('assets/portrait-extra-12.webp'));assert(html.includes('DÉFAUT'));assert(!html.includes('Essayer de dérober la montre du client'));
 console.log('V5 OK: montre absente, 12 portraits, contacts/défauts, achats, équipements, consommables, services, 2D6, sauvegarde des états.');
