@@ -12,12 +12,14 @@ async function wait(messages,check){for(let i=0;i<150;i++){const entry=messages.
  const guest=await join();guest.ws.send(JSON.stringify({type:'join',room,character:'yanis',name:'Yanis'}));await wait(host.messages,x=>x.type==='snapshot'&&x.data.players.length===2);
  host.ws.send(JSON.stringify({type:'start'}));await wait(host.messages,x=>x.type==='snapshot'&&x.data.game?.scene==='belle_open');
  assert.equal(rooms.get(room).game.stats.money,150);
+ host.ws.send(JSON.stringify({type:'world',action:'travel',id:'vieux-port'}));await wait(host.messages,x=>x.type==='snapshot'&&x.data.game?.city?.district==='vieux-port');
+ guest.ws.send(JSON.stringify({type:'world',action:'travel',id:'corniche'}));await wait(guest.messages,x=>x.type==='error'&&x.message.includes('hôte'));
  guest.ws.send(JSON.stringify({type:'world',action:'buy',id:'lockpick'}));await wait(guest.messages,x=>x.type==='error'&&x.message.includes('hôte'));assert.equal(rooms.get(room).game.stats.money,150);
  host.ws.send(JSON.stringify({type:'world',action:'buy',id:'lockpick'}));await wait(host.messages,x=>x.type==='snapshot'&&x.data.game?.inventory?.lockpick===1);assert.equal(rooms.get(room).game.stats.money,30);
  host.ws.send(JSON.stringify({type:'world',action:'equip',id:'lockpick'}));await wait(host.messages,x=>x.type==='snapshot'&&x.data.game?.equipped==='lockpick');
  host.ws.send(JSON.stringify({type:'vote',choice:'belle_go'}));guest.ws.send(JSON.stringify({type:'vote',choice:'belle_go'}));await wait(host.messages,x=>x.type==='snapshot'&&x.data.votedCount===2);
  host.ws.send(JSON.stringify({type:'resolve'}));await wait(host.messages,x=>x.type==='snapshot'&&x.data.game?.scene==='belle_brief');
- assert.equal(rooms.get(room).game.inventory.lockpick,1);
+ assert.equal(rooms.get(room).game.inventory.lockpick,1);assert.equal(rooms.get(room).game.city.district,'vieux-port');
  console.log('Multijoueur V5 : achats réservés à l’hôte, caisse, équipement, synchronisation WebSocket, progression et inventaire conservé OK.');
  }finally{clients.forEach(w=>w.close());await delay(35);await new Promise(resolve=>server.close(resolve));}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});
