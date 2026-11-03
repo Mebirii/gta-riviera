@@ -7,7 +7,7 @@ const HEROES=[
 {id:'mathieu',name:'Mathieu',role:'Le diplomate',bio:'Un contact et une conversation valent parfois mieux qu’une arme.',portrait:'mathieu',skills:{physique:0,ruse:1,technique:0,bagout:2,pilotage:1},specialty:'bagout',color:'#ffc17b'},
 {id:'juliette',name:'Juliette',role:'La pilote',bio:'Connaît les routes, garde l’œil ouvert et sait improviser.',portrait:'juliette',skills:{physique:1,ruse:1,technique:0,bagout:0,pilotage:2},specialty:'pilotage',color:'#ff82a1'}];
 const MISSIONS=[
-{id:'belladone',name:'01 · La Nuit du Belladone',tag:'DOSSIER NÉRÉE · ACTE I',desc:'Le premier contact avec Lucien. Un contrat, une suite 307, et une soirée qui peut mal tourner.',image:'belladone',length:'25–40 min'},
+{id:'belladone',name:'01 · La Nuit du Belladone',tag:'DOSSIER NÉRÉE · ACTE I',desc:'Le premier contact avec Lucien. Un contrat, une suite 307, et une soirée qui peut mal tourner.',image:'belladone',length:'45–90 min · quêtes annexes'},
 {id:'neree',name:'02 · La Seconde Moitié',tag:'DOSSIER NÉRÉE · ACTE II',desc:'Les conséquences du Belladone ouvrent une nouvelle enquête autour de Nérée.',image:'docks',length:'25–40 min'},
 {id:'debt',name:'03 · Les Dettes de Lucien',tag:'MISSION SECONDAIRE',desc:'Une dette au café des Arcades révèle un montage financier.',image:'lucien',length:'10–15 min'},
 {id:'convoy',name:'04 · Le Convoi Nocturne',tag:'MISSION ACTION',desc:'Une cargaison sur la corniche ne doit pas parvenir à bon port.',image:'chase',length:'10–15 min'},
