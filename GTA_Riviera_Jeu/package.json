@@ -5,7 +5,7 @@
   "description": "GTA Riviera : JDR narratif à choix, grand scénario Nérée en deux actes, quêtes annexes à débloquer, mode MJ IA facultatif",
   "scripts": {
     "start": "node server.js",
-    "test": "node test-v4.js && node test-ui-v4.js && node test-v5.js && node test-online-v5.js && node test-v6.js && node test-ui-v6.js && node test-mj.js && node test-mj-online.js && node test-story-v8.js"
+    "test": "node test-v4.js && node test-ui-v4.js && node test-v5.js && node test-online-v5.js && node test-v6.js && node test-ui-v6.js && node test-mj.js && node test-mj-online.js && node test-story-v8.js && node test-ui-story-v8.js"
   },
   "dependencies": {
     "pg": "8.16.3"
