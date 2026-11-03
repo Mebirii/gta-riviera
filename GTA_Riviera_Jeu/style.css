@@ -237,3 +237,29 @@ body{background:radial-gradient(circle at 50% 0,#26354e 0,#0b1422 45%,#080d18 85
 .ai-player{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #30435b;gap:8px;font-size:13px}
 .ai-player small{font-size:10px;color:#8cd1c7}
 @media(max-width:850px){.ai-layout{grid-template-columns:1fr;padding:12px}.ai-hero{padding:24px 18px 17px}.ai-thread{padding:12px}.ai-compose{padding:14px}.ai-compose-bottom{align-items:stretch;flex-direction:column}.ai-aside{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
+
+
+/* V8 · La trame narrative prime : exploration facultative et carnet de quêtes */
+.exploration-optional{margin:12px 0 20px;border:1px solid #33475a;border-radius:12px;overflow:hidden;background:#122236}
+.exploration-optional>summary{cursor:pointer;padding:15px 18px;font-size:13px;font-weight:700;color:#d2e1e9;letter-spacing:.2px}
+.exploration-optional>summary:hover{background:#213247}
+.exploration-optional .riviera-explore{margin:0;border:0;border-top:1px solid #354a5d;border-radius:0;box-shadow:none}
+.quest-journal{border:1px solid #556b72!important}
+.quest-journal h3{font:800 25px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.4px;color:#fff;margin:8px 0 4px}
+.quest-tagline{font-size:11px;color:#c4d1d9;margin:4px 0 13px;line-height:1.5}
+.main-quest-progress{display:flex;gap:6px;margin:8px 0 18px}
+.main-quest-progress span{flex:1;padding:9px 5px;text-align:center;border:1px solid #42515e;border-radius:7px;background:#1a2b38;font-size:10px;font-weight:800;color:#8595a4}
+.main-quest-progress .current{border-color:#efba6a;background:#413425;color:#ffdfab}
+.main-quest-progress .complete{border-color:#65bcae;background:#183d36;color:#a1eedf}
+.quest-divider{font-size:10px;letter-spacing:1.1px;color:#e4c295;font-weight:800;margin:13px 0 10px}
+.quest-entry{border:1px solid #394c60;border-radius:9px;padding:10px 11px;margin:9px 0;background:#1b2a3c}
+.quest-entry.locked{opacity:.7;border-style:dashed}
+.quest-entry.available{border-color:#ac8558;background:#2c2d36}
+.quest-entry.done{border-color:#47766a;background:#1a3336}
+.quest-title{display:flex;justify-content:space-between;gap:9px;align-items:start}
+.quest-title strong{font-size:12px;line-height:1.35}
+.quest-title small{font-size:9px;letter-spacing:.5px;white-space:nowrap;color:#bdd3cf;font-weight:800}
+.quest-entry.available .quest-title small{color:#ffd28b}
+.quest-entry.done .quest-title small{color:#91e5bf}
+.quest-entry p{font-size:11px;color:#b9c8d1;margin:5px 0 0;line-height:1.5}
+.quest-bottom{border-top:1px solid #354659;padding-top:11px;margin-top:14px;font-size:11px;color:#b1c8cb;line-height:1.55}
