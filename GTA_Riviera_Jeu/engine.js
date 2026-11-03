@@ -16,6 +16,29 @@ const MISSION_START={belladone:'belle_open',neree:'intro',debt:'debt_intro',conv
 const SKILL_LABEL={physique:'Physique',ruse:'Ruse',technique:'Technique',bagout:'Bagout',pilotage:'Pilotage'};
 const SKILL_HELP={physique:'Forcer, courir, résister.',ruse:'Mentir, subtiliser, s’infiltrer.',technique:'Pirater, réparer, ouvrir.',bagout:'Convaincre, négocier, intimider.',pilotage:'Conduire, manœuvrer, poursuivre.'};
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
+
+const CAMPAIGN={
+ id:'neree',name:'LE DOSSIER NÉRÉE',subtitle:'Premier grand scénario · Riviera d’Oro, 1991',
+ acts:[
+  {id:'belladone',title:'ACTE I · La Nuit du Belladone',tag:'Premier contrat et infiltration',mission:'belladone'},
+  {id:'neree',title:'ACTE II · La Seconde Moitié',tag:'Enquête, révélations et choix final',mission:'neree'}
+ ]
+};
+const SIDE_QUESTS=[
+ {id:'plates',name:'Les plaques fantômes',stage:'belladone',scene:'side_plates',at:['belle_prep'],hint:'Observer les alentours du premier rendez-vous ou connaître Nico.',desc:'Un véhicule surveille le garage des Tamaris.',unlock:s=>!!s.flags.garageIntel||!!s.crew?.some(p=>p.contactId==='mechanic')},
+ {id:'nora',name:'Le service de Nora',stage:'belladone',scene:'side_nora',at:['belle_prep'],hint:'Questionner Lucien au sujet du personnel ou connaître Sofia.',desc:'Une employée pourrait ouvrir un passage discret au Belladone.',unlock:s=>!!s.flags.noraClue||!!s.crew?.some(p=>p.contactId==='barmaid')},
+ {id:'loge',name:'Le registre du personnel',stage:'belladone',scene:'side_loge',at:['belle_stairs'],hint:'Découvrir un accès de service ou gagner un allié dans l’hôtel.',desc:'Un registre permettrait de comprendre les rondes de Hugo.',unlock:s=>!!(s.flags.barIntel||s.flags.servicePass||s.flags.noraAlly)},
+ {id:'cendre',name:'Les pas de Cendre',stage:'belladone',scene:'side_cendre',at:['belle_stairs'],hint:'Repérer Mara et comprendre son trajet.',desc:'Une équipe inconnue semble suivre le même objectif.',unlock:s=>!!s.flags.maraIntel},
+ {id:'nora_after',name:'Une employée introuvable',stage:'post',scene:'side_nora_after',at:['mission_hub'],hint:'Gagner la confiance de Nora avant de quitter le Belladone.',desc:'Une voix familière demande de l’aide après l’opération.',unlock:s=>!!s.completed?.belladone&&!!(s.flags.noraAlly||s.flags.noraShift)},
+ {id:'mara_favor',name:'Le prix de la parole',stage:'post',scene:'side_mara_favor',at:['mission_hub'],hint:'Négocier une trêve avec Mara au Belladone.',desc:'Une faveur promise à Cendre finit par être réclamée.',unlock:s=>!!s.completed?.belladone&&!!s.flags.maraContact}
+];
+const questStatus=(s,q)=>s.sideQuests?.[q.id]?'done':q.unlock(s)?'available':'locked';
+function questJournal(s){return{campaign:CAMPAIGN,main:s.completed?.neree?'complete':s.completed?.belladone?'act2':'act1',quests:SIDE_QUESTS.map(q=>({id:q.id,name:q.name,stage:q.stage,description:questStatus(s,q)==='locked'?'À découvrir en explorant l’histoire.':q.desc,hint:q.hint,status:questStatus(s,q),activeScene:q.scene===s.scene}))};}
+function questChoices(s,at){
+ return SIDE_QUESTS.filter(q=>q.at.includes(at)&&questStatus(s,q)==='available')
+  .map(q=>choice('quest_'+q.id,'QUÊTE ANNEXE · '+q.name,q.desc,q.scene,{questStart:q.id}));
+}
+
 function createGame(difficulty='normal',mission='belladone'){
  if(!Object.keys(MISSION_START).includes(mission)||mission==='gala')mission='belladone';
  const fresh=mission==='belladone';
