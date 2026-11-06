@@ -360,3 +360,43 @@ body{background:radial-gradient(circle at 50% 0,#26354e 0,#0b1422 45%,#080d18 85
     max-height:125px;
   }
 }
+
+
+/* V8.2 – les 12 portraits alternatifs sont désormais des photographies fictives HD
+   indépendantes (512×512) : aucun agrandissement d'une vignette 228×252. */
+.sheet-picture img.character-portrait--hd{
+  display:block;
+  position:relative;
+  z-index:1;
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  min-width:0;
+  object-fit:cover;
+  object-position:center 43%;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  transform:none;
+  filter:contrast(1.085) saturate(.88) sepia(.055);
+  image-rendering:auto;
+}
+.portrait-choice img.character-portrait--hd,
+.avatar.photo img.character-portrait--hd,
+.entry-image img.character-portrait--hd {
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  object-fit:cover;
+  object-position:center 42%;
+  transform:none;
+  filter:contrast(1.08) saturate(.88) sepia(.055);
+  image-rendering:auto;
+}
+.portrait-choice img.character-portrait--hd:hover{filter:contrast(1.12) saturate(.97)}
+@media(max-width:700px){
+  .sheet-picture img.character-portrait--hd{width:100%;height:100%;max-width:none;max-height:none}
+}
