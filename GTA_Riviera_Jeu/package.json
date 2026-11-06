@@ -1,8 +1,8 @@
 {
   "name": "gta-riviera-campagne",
-  "version": "8.1.0",
+  "version": "8.2.0",
   "private": true,
-  "description": "GTA Riviera : JDR narratif, scénario Nérée, quêtes annexes et portraits recadrés",
+  "description": "GTA Riviera JDR narratif : grand scénario Nérée, quêtes annexes, 12 portraits fictifs HD 512px",
   "scripts": {
     "start": "node server.js",
     "test": "node test-v4.js && node test-ui-v4.js && node test-v5.js && node test-online-v5.js && node test-v6.js && node test-ui-v6.js && node test-mj.js && node test-mj-online.js && node test-story-v8.js && node test-ui-story-v8.js && node test-portraits-v81.js"
